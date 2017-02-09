@@ -2,6 +2,8 @@ classdef LightCrafter4500 < handle
 
     properties (SetAccess = private)
         refreshRate
+        LEDS
+        LEDS_EACH
     end
 
     properties (Constant)
@@ -11,15 +13,26 @@ classdef LightCrafter4500 < handle
     end
 
     properties (Constant, Access = private)
-        LEDS = {'none', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'} % increasing bit order
+        LEDS_standard = {'none', 'red', 'green', 'red+green', 'blue', 'red+blue', 'green+blue', 'red+green+blue'}
+        LEDS_uv = {'none', 'green', 'blue', 'green+blue', 'blue', 'green+uv', 'uv+blue', 'blue+uv+green'}
+        LEDS_EACH_standard = {'blue','green','red'};
+        LEDS_EACH_uv = {'uv','blue','green'};
+        
         MIN_EXPOSURE_PERIODS = [235, 700, 1570, 1700, 2000, 2500, 4500, 8333] % increasing bit depth order, us
         NUM_BIT_PLANES = 24
     end
 
     methods
 
-        function obj = LightCrafter4500(refreshRate)
+        function obj = LightCrafter4500(refreshRate, colorMode)
             obj.refreshRate = refreshRate;
+            if strcmp(colorMode, 'tricolor')
+                obj.LEDS = obj.LEDS_uv;
+                obj.LEDS_EACH = obj.LEDS_EACH_uv;
+            else
+                obj.LEDS = obj.LEDS_standard;
+                obj.LEDS_EACH = obj.LEDS_EACH_standard;
+            end
         end
 
         function delete(obj)
@@ -122,11 +135,19 @@ classdef LightCrafter4500 < handle
             end
 
             % Color to LED selection.
+            leds = obj.LEDS
             index = cellfun(@(c)strncmpi(c, color, length(color)), obj.LEDS);
             if ~any(index)
                 error('Unknown color');
             end
-            ledSelect = find(index, 1, 'first') - 1;
+            if numPatterns == 1
+                ledSelectByPattern = find(index, 1, 'first') - 1;
+            elseif numPatterns == 3
+                ledSelectByPattern = [1,2,4];
+            else
+                warning('Not set up for this number of patterns')
+                ledSelectByPattern = [1,2,4];
+            end
 
             % Stop the current pattern sequence.
             lcrPatternDisplay(0);
@@ -149,7 +170,7 @@ classdef LightCrafter4500 < handle
                 insertBlack = false;
                 trigOutPrev = false;
 
-                lcrAddToPatLut(trigType, patNum, bitDepth, ledSelect, invertPat, insertBlack, bufSwap, trigOutPrev);
+                lcrAddToPatLut(trigType, patNum, bitDepth, ledSelectByPattern(i), invertPat, insertBlack, bufSwap, trigOutPrev);
             end
 
             % Set pattern display data to stream through 24-bit RGB external interface.
@@ -176,31 +197,33 @@ classdef LightCrafter4500 < handle
             end
 
             % Start the pattern sequence.
+            pause(0.02);
             lcrPatternDisplay(2);
         end
 
-        function [bitDepth, color, numPatterns] = getPatternAttributes(obj)
+        function [firstBitDepth, color, numPatterns] = getPatternAttributes(obj)
             if ~strcmpi(obj.getMode(), 'pattern')
                 error('Must be in pattern mode to get pattern attributes');
             end
 
-            % Check all patterns for a consistent bit depth and color.
-            [~, ~, bitDepth, ledSelect] = lcrGetPatLutItem(0);
+            % Check all patterns for a consistent bit depth (removed: and color).
+            % that is, art the same as the first pattern
+            [~, ~, firstBitDepth, firstLedSelect] = lcrGetPatLutItem(0);
             numPatterns = lcrGetPatternConfig();
+            ledSelectByPattern = firstLedSelect;
             for i = 2:numPatterns
-                [~, ~, d, l] = lcrGetPatLutItem(i - 1);
+                [~, ~, thisBitDepth, thisLedSelect] = lcrGetPatLutItem(i - 1);
 
-                if d ~= bitDepth
+                if thisBitDepth ~= firstBitDepth
                     error('Nonhomogeneous bit depth');
                 end
+                
+                ledSelectByPattern(i) = thisLedSelect;
 
-                if l ~= ledSelect
-                    error('Nonhomogenenous color');
-                end
             end
 
             % LED selection to color.
-            color = obj.LEDS{ledSelect + 1};
+            color = strjoin(obj.LEDS_EACH(log2(ledSelectByPattern)+1),'+');
         end
 
     end
