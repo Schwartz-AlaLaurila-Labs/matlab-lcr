@@ -26,6 +26,9 @@ classdef LightCrafter4500 < handle
 
         function obj = LightCrafter4500(refreshRate, colorMode)
             obj.refreshRate = refreshRate;
+            if nargin < 2
+                colorMode = 'single';
+            end
             if strcmp(colorMode, 'tricolor')
                 obj.LEDS = obj.LEDS_uv;
                 obj.LEDS_EACH = obj.LEDS_EACH_uv;
