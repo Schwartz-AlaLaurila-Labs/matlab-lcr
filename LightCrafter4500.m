@@ -162,7 +162,7 @@ classdef LightCrafter4500 < handle
                 insertBlack = false;
                 trigOutPrev = false;
                 
-                colorIndex = cellfun(@(c)strncmpi(c, color{i}, length(color{i})), obj.LEDS);
+                colorIndex = cellfun(@(c)strcmp(c, color{i}), obj.LEDS);
                 ledSelect = find(colorIndex, 1, 'first') - 1;
                 
                 lcrAddToPatLut(trigType, patNum, bitDepth, ledSelect, invertPat, insertBlack, bufSwap, trigOutPrev);
