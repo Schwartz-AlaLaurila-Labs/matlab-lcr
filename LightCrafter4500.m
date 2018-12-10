@@ -15,8 +15,10 @@ classdef LightCrafter4500 < handle
     properties (Constant, Access = private)
         LEDS_standard = {'none', 'red', 'green', 'red+green', 'blue', 'blue+red', 'blue+green', 'white'}
         LEDS_uv = {'none', 'green', 'uv', 'green+uv', 'blue', 'blue+green', 'blue+uv', 'blue+uv+green'};
+        LEDS_uv2 = {'none', 'blue', 'uv', 'blue+uv', 'green', 'green+blue', 'green+uv', 'green+uv+blue'};
         LEDS_EACH_standard = {'red','green','blue'};
         LEDS_EACH_uv = {'green','uv','blue'};
+        LEDS_EACH_uv2 = {'blue','uv','green'};
         
         MIN_EXPOSURE_PERIODS = [235, 700, 1570, 1700, 2000, 2500, 4500, 8333] % increasing bit depth order, us
         NUM_BIT_PLANES = 24
@@ -32,6 +34,9 @@ classdef LightCrafter4500 < handle
             if strcmp(colorMode, 'uv')
                 obj.LEDS = obj.LEDS_uv;
                 obj.LEDS_EACH = obj.LEDS_EACH_uv;
+            elseif strcmp(colorMode, 'uv2')
+                obj.LEDS = obj.LEDS_uv2;
+                obj.LEDS_EACH = obj.LEDS_EACH_uv2;
             else
                 obj.LEDS = obj.LEDS_standard;
                 obj.LEDS_EACH = obj.LEDS_EACH_standard;
