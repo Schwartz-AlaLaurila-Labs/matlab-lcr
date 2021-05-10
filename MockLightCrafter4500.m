@@ -48,7 +48,7 @@ classdef MockLightCrafter4500 < LightCrafter4500
         end
         
         function setLedEnables(self, varargin)
-            self.led_enable = cell2mat(varargin);
+            self.led_enable = cellfun(@logical, varargin);
         end
         
         function varargout = getLedCurrents(self)
