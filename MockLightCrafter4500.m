@@ -14,7 +14,7 @@ classdef MockLightCrafter4500 < LightCrafter4500
     methods
         function self = MockLightCrafter4500(refreshRate, colorMode)
             self@LightCrafter4500(refreshRate, colorMode);
-            self.color = {self.LEDS{1}, 'none', 'none'};
+            self.color = {self.LEDS_EACH{1}, 'none', 'none'};
             self.bitDepth = self.MAX_PATTERN_BIT_DEPTH;
             self.numPatterns = 1;
         end
@@ -44,7 +44,7 @@ classdef MockLightCrafter4500 < LightCrafter4500
         end
         
         function varargout = getLedEnables(self)
-            [varargout{:}] = num2cell(self.led_enable);
+            [varargout(:)] = num2cell(self.led_enable);
         end
         
         function setLedEnables(self, varargin)
@@ -52,7 +52,7 @@ classdef MockLightCrafter4500 < LightCrafter4500
         end
         
         function varargout = getLedCurrents(self)
-            [varargout{:}] = num2cell(self.led_currents);
+            [varargout(:)] = num2cell(self.led_currents);
         end
         
         function setLedCurrents(self, varargin)
@@ -77,7 +77,7 @@ classdef MockLightCrafter4500 < LightCrafter4500
             if ~isa(color, 'cell')
                 color = {color, 'none', 'none'};
             end
-            if any(~ismember(color, horzcat(self.LEDs,{'none'})))
+            if any(~ismember(color, self.LEDS))
                 error('A selected color(s) does not exist for this projector.');
             end
             
